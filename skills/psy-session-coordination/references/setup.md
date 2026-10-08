@@ -39,10 +39,18 @@ messaging servers or change hook trust decisions. Review and trust new Codex hoo
 definitions through the installed host's supported interface. New or resumed
 sessions load the hook configuration as supported by that host.
 
+The installer refuses symlinked settings files or tool configuration directories,
+including dangling links, before updating either tool. It also refuses nonregular
+files and settings larger than 1 MiB. For dotfile-managed settings, integrate the
+hook definitions into the canonical configuration through your existing setup;
+keep the symlinks intact. Do not edit settings concurrently with installation.
+
 The five events are `SessionStart`, `UserPromptSubmit`, `PostToolUse`, `Stop` and
 `SessionEnd`. Each invokes the same helper in `hook --tool ...` mode. It records
 native identity, checkout, task label, observed presence and advertised routes.
-It excludes prompt text, transcripts, tool arguments and messaging tokens.
+These session records exclude prompt text, transcripts, tool arguments and
+messaging tokens. Configuration backups are separate and contain the complete
+original settings, as explained below.
 
 Default state lives at `~/.local/state/agent-sessions`; `AGENT_SESSIONS_DIR` or
 `--state-dir` can select another private location. Local hook execution is
@@ -52,6 +60,30 @@ To remove the integration, remove only the exact helper commands from each tool'
 hook configuration. Preserve unrelated hooks and review changes through the host.
 The installer currently has no uninstall or path-migration command. Installing
 again from a different path does not remove old entries; inspect those explicitly.
+
+## Local data and retention
+
+Session records contain repository and checkout paths, tool and native session
+IDs, explicit task notes, timestamps, observed presence and advertised reply
+routes. These can reveal private project names and local activity even without
+chat content. Keep task notes free of secrets and unnecessary personal data.
+
+The helper writes registry directories with mode `0700` and record/backup files
+with mode `0600` on systems that support POSIX permissions. It sends no network
+requests. Peer messages are a separate action through the selected host or
+transport and follow that system's privacy settings.
+
+The `config-backups/` directory holds full copies of pre-installation Codex and
+Claude settings. Those copies can contain credentials or other sensitive values
+already present in the settings. Restrictive file permissions do not redact them.
+Keep the registry outside repositories and public/shared or cloud-synced folders.
+
+There is no automatic retention limit or purge command. Ended and stale session
+records remain on disk; `--all` includes historical records. Removing the hook
+commands stops future hook updates but leaves records and backups in place.
+After disabling hooks, review and remove only the records and backups you no
+longer need from the configured registry. Active hooks can recreate records.
+Deleting discovery metadata does not release repository ownership claims.
 
 ## Manual registration
 

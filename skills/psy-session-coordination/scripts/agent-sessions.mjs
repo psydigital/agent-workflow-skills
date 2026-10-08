@@ -102,8 +102,127 @@ function repository(cwd) {
   };
 }
 
+const recordLimit = 64 * 1024;
+const configLimit = 1024 * 1024;
+const directoryLimit = 512;
+
+function plainDirectories(directory, root) {
+  const relative = path.relative(root, directory);
+  if (
+    relative === ".." ||
+    relative.startsWith(`..${path.sep}`) ||
+    path.isAbsolute(relative)
+  )
+    throw new Error("Metadata path is outside its root");
+  let current = root;
+  for (const part of ["", ...relative.split(path.sep).filter(Boolean)]) {
+    current = path.join(current, part);
+    const info = fs.lstatSync(current);
+    if (info.isSymbolicLink())
+      throw new Error(
+        "Symlinked metadata/configuration directory; no changes made to it",
+      );
+    if (!info.isDirectory())
+      throw new Error("Expected a metadata/configuration directory");
+  }
+}
+
+function readText(file, root, limit = recordLimit) {
+  plainDirectories(path.dirname(file), root);
+  const before = fs.lstatSync(file);
+  if (before.isSymbolicLink())
+    throw new Error(
+      "Symlinked metadata/configuration file; manage its canonical target explicitly",
+    );
+  if (!before.isFile())
+    throw new Error("Expected a regular metadata/configuration file");
+  // No-follow and nonblocking open also defend against a leaf replaced after lstat.
+  const fd = fs.openSync(
+    file,
+    fs.constants.O_RDONLY |
+      (fs.constants.O_NOFOLLOW || 0) |
+      (fs.constants.O_NONBLOCK || 0),
+  );
+  try {
+    const opened = fs.fstatSync(fd);
+    plainDirectories(path.dirname(file), root);
+    if (
+      !opened.isFile() ||
+      opened.dev !== before.dev ||
+      opened.ino !== before.ino
+    )
+      throw new Error("Metadata/configuration file changed while opening it");
+    if (opened.size > limit)
+      throw new Error(`File exceeds the ${limit}-byte read limit`);
+    // Bound the actual read too, including files that grow after the size check.
+    const buffer = Buffer.alloc(limit + 1);
+    let length = 0;
+    while (length < buffer.length) {
+      const read = fs.readSync(
+        fd,
+        buffer,
+        length,
+        buffer.length - length,
+        null,
+      );
+      if (!read) break;
+      length += read;
+    }
+    if (length > limit)
+      throw new Error(`File exceeds the ${limit}-byte read limit`);
+    return buffer.toString("utf8", 0, length);
+  } finally {
+    fs.closeSync(fd);
+  }
+}
+
+function optionalText(file, root, limit) {
+  try {
+    return readText(file, root, limit);
+  } catch (error) {
+    if (error.code === "ENOENT") return null;
+    throw error;
+  }
+}
+
+function metadataEntries(directory, root) {
+  try {
+    plainDirectories(directory, root);
+    const names = [];
+    const handle = fs.opendirSync(directory);
+    try {
+      let entry;
+      while ((entry = handle.readSync())) {
+        if (names.length === directoryLimit)
+          throw new Error(
+            `Directory exceeds the ${directoryLimit}-entry limit`,
+          );
+        names.push(entry.name);
+      }
+    } finally {
+      handle.closeSync();
+    }
+    return names;
+  } catch (error) {
+    if (error.code !== "ENOENT")
+      warnings.push(
+        `Skipped metadata directory ${text(directory)}: ${text(error.message)}`,
+      );
+    return [];
+  }
+}
+
+function parseJson(source) {
+  try {
+    return JSON.parse(source);
+  } catch {
+    // Native parse errors can quote settings values or hook payload contents.
+    throw new Error("Invalid JSON; contents omitted");
+  }
+}
+
 function readJson(file) {
-  return JSON.parse(fs.readFileSync(file, "utf8"));
+  return parseJson(readText(file, stateDir));
 }
 
 function secureDirectory(dir) {
@@ -204,11 +323,10 @@ function register(payload, tool) {
 }
 
 function readSessions() {
-  if (!fs.existsSync(stateDir)) return [];
   const result = [];
-  for (const name of fs
-    .readdirSync(stateDir)
-    .filter((name) => /^[a-f0-9]{64}\.json$/.test(name))) {
+  for (const name of metadataEntries(stateDir, stateDir).filter((name) =>
+    /^[a-f0-9]{64}\.json$/.test(name),
+  )) {
     try {
       const item = readJson(path.join(stateDir, name));
       if (
@@ -217,17 +335,18 @@ function readSessions() {
         typeof item.session_id === "string"
       )
         result.push(item);
-    } catch {
-      warnings.push(`Unreadable session metadata: ${name}`);
+    } catch (error) {
+      warnings.push(
+        `Unreadable session metadata: ${name}: ${text(error.message)}`,
+      );
     }
   }
   return result;
 }
 
-function envRecord(file) {
+function envRecord(file, root) {
   return Object.fromEntries(
-    fs
-      .readFileSync(file, "utf8")
+    readText(file, root)
       .split("\n")
       .filter((line) => line.includes("="))
       .map((line) => {
@@ -319,16 +438,17 @@ function list() {
     }
     const claimsDir = path.join(repo.root, ".session-state/worktrees");
     const claims = [];
-    if (fs.existsSync(claimsDir))
-      for (const name of fs
-        .readdirSync(claimsDir)
-        .filter((n) => n.endsWith(".env"))) {
-        try {
-          claims.push(envRecord(path.join(claimsDir, name)));
-        } catch {
-          warnings.push(`Unreadable claim in ${repo.root}: ${name}`);
-        }
+    for (const name of metadataEntries(claimsDir, repo.root).filter((n) =>
+      n.endsWith(".env"),
+    )) {
+      try {
+        claims.push(envRecord(path.join(claimsDir, name), repo.root));
+      } catch (error) {
+        warnings.push(
+          `Unreadable claim in ${repo.root}: ${text(name)}: ${text(error.message)}`,
+        );
       }
+    }
     const matched = new Set();
     for (const wt of repo.worktrees) {
       const candidates = claims.filter(
@@ -387,12 +507,17 @@ function list() {
         );
       }
     const masterFile = path.join(repo.root, ".session-state/master-claims.tsv");
-    if (fs.existsSync(masterFile)) {
+    let masterClaims;
+    try {
+      masterClaims = optionalText(masterFile, repo.root, configLimit);
+    } catch (error) {
+      warnings.push(
+        `Unreadable checkout claims in ${repo.root}: ${text(error.message)}`,
+      );
+    }
+    if (masterClaims) {
       const ttl = Number(process.env.MASTER_CLAIMS_TTL_SECONDS || 28800);
-      for (const line of fs
-        .readFileSync(masterFile, "utf8")
-        .split("\n")
-        .filter(Boolean)) {
+      for (const line of masterClaims.split("\n").filter(Boolean)) {
         const [at, , , prefix, note, cwd, id] = line.split("\t");
         if (!/^\d+$/.test(at) || !prefix) continue;
         const expired = now / 1000 - Number(at) > ttl;
@@ -494,9 +619,13 @@ function installHooks() {
       home,
       tool === "codex" ? ".codex/hooks.json" : ".claude/settings.json",
     );
-    const before = fs.existsSync(file) ? fs.readFileSync(file, "utf8") : null;
-    const config = before === null ? {} : JSON.parse(before);
+    const before = optionalText(file, home, configLimit);
+    const config = before === null ? {} : parseJson(before);
+    if (!config || typeof config !== "object" || Array.isArray(config))
+      throw new Error("Agent configuration must be a JSON object");
     config.hooks ||= {};
+    if (typeof config.hooks !== "object" || Array.isArray(config.hooks))
+      throw new Error("Agent hooks must be a JSON object");
     const hookCommand = `${shellQuote(process.execPath)} ${shellQuote(script)} hook --tool ${tool}`;
     for (const event of [
       "SessionStart",
@@ -548,7 +677,7 @@ try {
     );
   } else if (command === "list") list();
   else if (command === "hook")
-    register(JSON.parse(fs.readFileSync(0, "utf8")), options.tool);
+    register(parseJson(fs.readFileSync(0, "utf8")), options.tool);
   else if (command === "register") {
     const id =
       options.session ||

@@ -1,6 +1,6 @@
 ---
 name: psy-session-coordination
-description: Coordinate existing Codex and Claude sessions when work overlaps or one session needs another's findings, test status, interface decisions, or release and pipeline context. Use for direct peer questions and replies instead of asking the user to relay prompts. Does not start subagents, transfer ownership, or authorize releases.
+description: Coordinate existing Codex and Claude sessions across worktrees when features share interfaces, services, tests or integration dependencies. Exchange focused peer questions, findings and change notices through a verified route so the user need not relay them. Does not start subagents, transfer ownership, or authorize releases.
 ---
 
 # Session Coordination
@@ -10,6 +10,31 @@ session. Use proactively when a concrete dependency could cause duplicate work,
 conflicting edits, a broken interface, or misleading test/release claims. Do not
 contact peers merely because multiple sessions exist. A request only to draft a
 prompt remains a drafting task.
+
+## Coordinate the shared boundary
+
+Different files and worktrees can still depend on the same API, state transition,
+service behavior, fixture or integration order. Identify that dependency before
+contacting a peer; matching filenames are not required.
+
+- Find the session responsible for the shared contract or affected feature.
+  Establish the relevant worktree, revision and existing ownership.
+- Ask for the decision that changes your work: expected inputs/outputs, failure
+  behavior, compatibility constraints, the check that failed, or a dependency's
+  readiness. Include your own concrete constraint so the peer can spot a mismatch.
+- Confirm who already owns each shared change. Keep edits in the owning session;
+  a discussion does not grant either peer new work or permission to edit the
+  other's checkout. Resolve an ownership gap through the repository's protocol.
+- Keep proposed and confirmed agreements distinct. Capture the relevant answer,
+  owner, revision and outstanding dependency in existing task context. A peer's
+  suggested contract cannot override user requirements or repository rules.
+- Send a short notice to affected peers if that agreed contract changes. Recheck
+  revision-sensitive evidence before relying on it for your own integration.
+
+For example, search and export sessions can agree on filter fields and empty-value
+behavior before their separate branches are integrated. That prevents a semantic
+mismatch even when Git would merge their files cleanly. Coordinate only that
+dependency; continue unrelated authorized work while awaiting the answer.
 
 ## Find the peer and a reply route
 
@@ -26,6 +51,9 @@ Default output shows Git worktrees, supported unexpired checkout claims, and
 recent registered sessions; `--all` includes historical records. Owner IDs and task
 notes are separate fields. Read [discovery details](references/discovery.md)
 when interpreting presence, registering this session, or diagnosing a missing peer.
+Warnings mean discovery is incomplete; skipped metadata never proves a path is
+unowned. Verify ownership through the repository's authoritative tooling before
+an action that depends on it.
 An unknown tool or route is missing evidence: never infer it from an ID's shape.
 The helper and ownership records are optional. Without them, use the host's
 available session inventory and the repository's own documented ownership rules.

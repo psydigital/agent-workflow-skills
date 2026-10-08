@@ -27,6 +27,14 @@ Repositories do not need ownership files to use discovery. Existing integrations
 can expose the [optional ownership record formats](ownership-records.md); the
 helper observes these records and does not create or enforce them.
 
+Legacy worktree records and session records must be regular files of at most
+64 KiB; the legacy checkout-claims TSV is limited to 1 MiB. Discovery rejects
+symlinked files and metadata directories beneath the selected repository or
+registry root. Each metadata directory is limited to 512 entries. An oversized
+directory is skipped in full; unsafe or oversized files are skipped individually.
+Warnings identify incomplete evidence. Never infer that a path is unowned from
+such a result; consult the repository's authoritative ownership tooling.
+
 If explicitly initialized, [portable claims](portable-claims.md) are read from
 Git's shared directory and emitted as `kind: "path-claim"`. Their owner includes
 both tool and native session ID, so equal IDs in different tools do not collide.
@@ -42,6 +50,9 @@ metadata under `~/.local/state/agent-sessions` (override with
 `AGENT_SESSIONS_DIR`). Records contain native tool/ID, repository/cwd, an
 optional explicit task label, timestamps and advertised routes. Prompts,
 transcripts, tool arguments and messaging tokens are not stored.
+These exclusions describe session records, not the installer's full settings
+backups. See [local data and retention](setup.md#local-data-and-retention) for
+backup contents, filesystem permissions and cleanup limitations.
 
 `recent`, `working`, and `idle` describe the last observed hook. After 30 minutes
 without an event, the display becomes `stale`; SessionEnd records `ended`.

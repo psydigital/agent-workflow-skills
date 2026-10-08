@@ -41,6 +41,8 @@ function run(dir, args, input = "", extraEnv = {}) {
       env: { ...env, ...extraEnv },
       input,
       encoding: "utf8",
+      timeout: 5000,
+      killSignal: "SIGKILL",
     },
   );
 }
@@ -342,4 +344,218 @@ test("hook installation preserves existing settings and is idempotent", (t) => {
       .SessionEnd.length,
     1,
   );
+  const backups = path.join(dir, "registry/config-backups");
+  const backupFiles = fs.readdirSync(backups);
+  assert.equal(backupFiles.length, 1);
+  assert.equal(fs.statSync(backups).mode & 0o777, 0o700);
+  const backup = path.join(backups, backupFiles[0]);
+  assert.deepEqual(JSON.parse(fs.readFileSync(backup, "utf8")), original);
+  assert.equal(fs.statSync(backup).mode & 0o777, 0o600);
+});
+
+for (const target of [".codex/hooks.json", ".claude/settings.json"])
+  for (const dangling of [false, true])
+    test(`hook installation leaves both configs untouched for a ${dangling ? "dangling" : "valid"} ${target} symlink`, (t) => {
+      const dir = fixture(t);
+      const home = path.join(dir, "home");
+      const original = '{"permissions":{"deny":["Write(secret)"]}}\n';
+      for (const name of [".codex/hooks.json", ".claude/settings.json"]) {
+        fs.mkdirSync(path.dirname(path.join(home, name)), { recursive: true });
+        if (name !== target) fs.writeFileSync(path.join(home, name), original);
+      }
+      const shared = path.join(dir, "shared-settings.json");
+      if (!dangling) fs.writeFileSync(shared, original);
+      fs.symlinkSync(shared, path.join(home, target));
+
+      const result = run(dir, ["install-hooks", "--home", home]);
+      assert.equal(result.status, 1, result.stderr);
+      assert.match(result.stderr, /symlink/i);
+      assert.equal(fs.readlinkSync(path.join(home, target)), shared);
+      if (dangling) assert.equal(fs.existsSync(shared), false);
+      else assert.equal(fs.readFileSync(shared, "utf8"), original);
+      const other = target.startsWith(".codex")
+        ? ".claude/settings.json"
+        : ".codex/hooks.json";
+      assert.equal(fs.readFileSync(path.join(home, other), "utf8"), original);
+      assert.equal(fs.existsSync(path.join(dir, "registry")), false);
+    });
+
+for (const kind of ["worktree", "master", "session"])
+  for (const unsafe of ["symlink", "oversized"])
+    test(`discovery skips ${unsafe} ${kind} metadata and reports incomplete evidence`, (t) => {
+      const dir = repository(t);
+      let file;
+      let contents;
+      if (kind === "worktree") {
+        file = path.join(dir, ".session-state/worktrees/unsafe.env");
+        contents = `canonical_path=${dir}\nowner_session_id=untrusted-owner\n`;
+      } else if (kind === "master") {
+        file = path.join(dir, ".session-state/master-claims.tsv");
+        contents = `${Math.floor(Date.now() / 1000)}\tu\th\tsrc/shared\tnote\t${dir}\tuntrusted-owner\n`;
+      } else {
+        hook(dir, "codex", "untrusted-owner");
+        file = path.join(
+          dir,
+          "registry",
+          fs.readdirSync(path.join(dir, "registry"))[0],
+        );
+        contents = fs.readFileSync(file, "utf8");
+        fs.unlinkSync(file);
+      }
+      fs.mkdirSync(path.dirname(file), { recursive: true });
+      if (unsafe === "symlink") {
+        const external = path.join(dir, "external-metadata");
+        fs.writeFileSync(external, contents);
+        fs.symlinkSync(external, file);
+      } else fs.writeFileSync(file, contents + " ".repeat(2 * 1024 * 1024));
+
+      const result = json(dir, ["list", "--repo", dir]);
+      assert.equal(
+        result.rows.some((row) => row.session_id === "untrusted-owner"),
+        false,
+      );
+      assert.ok(
+        result.warnings.length > 0,
+        "unsafe input must not look like a complete inventory",
+      );
+      assert.ok(
+        result.rows.some((row) => row.kind === "worktree" && row.registered),
+      );
+      if (unsafe === "symlink")
+        assert.equal(fs.lstatSync(file).isSymbolicLink(), true);
+      else
+        assert.equal(
+          fs.statSync(file).size,
+          Buffer.byteLength(contents) + 2 * 1024 * 1024,
+        );
+    });
+
+for (const alias of [".session-state", ".session-state/worktrees", "registry"])
+  test(`discovery refuses metadata beneath a symlinked ${alias} directory`, (t) => {
+    const dir = repository(t);
+    let original;
+    if (alias === "registry") {
+      hook(dir, "codex", "untrusted-owner");
+      original = path.join(dir, "registry");
+    } else {
+      const claims = path.join(dir, ".session-state/worktrees");
+      fs.mkdirSync(claims, { recursive: true });
+      fs.writeFileSync(
+        path.join(claims, "owner.env"),
+        `canonical_path=${dir}\nowner_session_id=untrusted-owner\n`,
+      );
+      original = path.join(dir, alias);
+    }
+    const external = path.join(dir, "external-directory");
+    fs.renameSync(original, external);
+    fs.symlinkSync(external, original, "dir");
+    const result = json(dir, ["list", "--repo", dir]);
+    assert.equal(
+      result.rows.some((row) => row.session_id === "untrusted-owner"),
+      false,
+    );
+    assert.ok(result.warnings.length > 0);
+    assert.equal(fs.readlinkSync(original), external);
+  });
+
+test(
+  "discovery rejects a FIFO claim without waiting for a writer",
+  { skip: process.platform === "win32" },
+  (t) => {
+    const dir = repository(t);
+    const claims = path.join(dir, ".session-state/worktrees");
+    fs.mkdirSync(claims, { recursive: true });
+    execFileSync("mkfifo", [path.join(claims, "blocked.env")]);
+    const result = json(dir, ["list", "--repo", dir]);
+    assert.ok(result.warnings.length > 0);
+    assert.equal(result.rows[0].session_id, null);
+  },
+);
+
+test("discovery refuses an excessive metadata directory rather than reporting a partial owner set", (t) => {
+  const dir = repository(t);
+  const claims = path.join(dir, ".session-state/worktrees");
+  fs.mkdirSync(claims, { recursive: true });
+  for (let i = 0; i < 513; i++)
+    fs.writeFileSync(path.join(claims, `${i}.env`), "");
+  const result = json(dir, ["list", "--repo", dir]);
+  assert.match(result.warnings.join("\n"), /limit|too many/i);
+  assert.equal(result.rows[0].session_id, null);
+  assert.equal(fs.readdirSync(claims).length, 513);
+});
+
+test("invalid session JSON never echoes its contents in discovery warnings", (t) => {
+  const dir = repository(t);
+  hook(dir, "codex", "current-session");
+  const file = path.join(
+    dir,
+    "registry",
+    fs.readdirSync(path.join(dir, "registry"))[0],
+  );
+  fs.writeFileSync(file, "PRIVATE synthetic metadata");
+  const result = json(dir, ["list", "--repo", dir]);
+  assert.ok(result.warnings.length > 0);
+  assert.doesNotMatch(JSON.stringify(result), /PRIVATE/);
+});
+
+test("invalid settings JSON is rejected without echoing configuration values or writing either config", (t) => {
+  const dir = fixture(t);
+  const home = path.join(dir, "home");
+  fs.mkdirSync(path.join(home, ".claude"), { recursive: true });
+  const file = path.join(home, ".claude/settings.json");
+  fs.writeFileSync(file, "PRIVATE synthetic setting");
+  const result = run(dir, ["install-hooks", "--home", home]);
+  assert.equal(result.status, 1);
+  assert.doesNotMatch(result.stdout + result.stderr, /PRIVATE/);
+  assert.equal(fs.readFileSync(file, "utf8"), "PRIVATE synthetic setting");
+  assert.equal(fs.existsSync(path.join(home, ".codex")), false);
+  assert.equal(fs.existsSync(path.join(dir, "registry")), false);
+});
+
+test("hook installation preserves a symlinked tool configuration directory", (t) => {
+  const dir = fixture(t);
+  const home = path.join(dir, "home");
+  const shared = path.join(dir, "shared-claude");
+  fs.mkdirSync(home);
+  fs.mkdirSync(shared);
+  fs.writeFileSync(path.join(shared, "settings.json"), "{}");
+  fs.symlinkSync(shared, path.join(home, ".claude"), "dir");
+  const result = run(dir, ["install-hooks", "--home", home]);
+  assert.equal(result.status, 1);
+  assert.equal(fs.readlinkSync(path.join(home, ".claude")), shared);
+  assert.equal(
+    fs.readFileSync(path.join(shared, "settings.json"), "utf8"),
+    "{}",
+  );
+  assert.equal(fs.existsSync(path.join(home, ".codex")), false);
+});
+
+test("oversized settings are rejected before either config is written", (t) => {
+  const dir = fixture(t);
+  const home = path.join(dir, "home");
+  fs.mkdirSync(path.join(home, ".claude"), { recursive: true });
+  const file = path.join(home, ".claude/settings.json");
+  const original = "{}" + " ".repeat(2 * 1024 * 1024);
+  fs.writeFileSync(file, original);
+  const result = run(dir, ["install-hooks", "--home", home]);
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /limit/i);
+  assert.equal(fs.readFileSync(file, "utf8"), original);
+  assert.equal(fs.existsSync(path.join(home, ".codex")), false);
+});
+
+test("hook installation supports a fresh home with no settings", (t) => {
+  const dir = fixture(t);
+  const home = path.join(dir, "home");
+  const result = run(dir, ["install-hooks", "--home", home]);
+  assert.equal(result.status, 0, result.stderr);
+  for (const target of [".codex/hooks.json", ".claude/settings.json"]) {
+    const file = path.join(home, target);
+    assert.equal(
+      JSON.parse(fs.readFileSync(file, "utf8")).hooks.SessionStart.length,
+      1,
+    );
+    assert.equal(fs.statSync(file).mode & 0o777, 0o600);
+  }
+  assert.equal(fs.existsSync(path.join(dir, "registry")), false);
 });

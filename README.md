@@ -29,6 +29,7 @@ projects without bringing an entire development environment along.
 - [Skill index](#skill-index)
 - [Installation](#installation)
 - [How the workflows fit together](#how-the-workflows-fit-together)
+- [When features overlap across worktrees](#when-features-overlap-across-worktrees)
 - [Example prompts](#example-prompts)
 - [Optional coordination tools](#optional-coordination-tools)
 - [Inside the repository](#inside-the-repository)
@@ -94,6 +95,18 @@ Invocation syntax depends on your agent: the plain-language prompts below are a
 useful starting point. Installing skill files doesn't automatically install
 hooks, start servers or replace a repository's existing commands.
 
+The external Skills CLI collects usage telemetry by default. Its
+[telemetry documentation](https://github.com/vercel-labs/skills#telemetry) explains
+what is sent. To disable its telemetry and security-audit requests for an install:
+
+```sh
+DO_NOT_TRACK=1 npx skills add psydigital/agent-workflow-skills
+```
+
+This setting applies to the installer; your coding agent and any messaging
+transport have their own data handling. Review the selected skill files before
+installation, including optional scripts you intend to run.
+
 ## How the workflows fit together
 
 **`psy-build` and `psy-finish` are the development entry points.** They read
@@ -119,6 +132,37 @@ entire development workflow.
 The collection has no mandatory framework or third-party skill-pack dependency.
 Implementation, review, integration, publication and deployment remain separate
 operations, governed by the user's request and the repository's rules.
+
+## When features overlap across worktrees
+
+**Separate worktrees can still depend on the same decisions.** One session might
+be building search filters while another adds CSV exports. Their files can merge
+cleanly even if they disagree about filter names, empty values or which records
+should be included.
+
+`psy-session-coordination` helps those existing sessions find each other and
+exchange a focused question through an available, verified messaging route.
+The search session can explain its proposed filter contract; the export session
+can identify the case it needs preserved. Each keeps ownership of its own work
+and records the relevant agreement and commit in its existing task context.
+
+| Shared dependency                    | A useful exchange                                                                               |
+| ------------------------------------ | ----------------------------------------------------------------------------------------------- |
+| API and consuming UI                 | Confirm response fields, error behavior and the revision being implemented.                     |
+| Different features using one service | Identify who owns the shared change and which callers need to stay compatible.                  |
+| Fixtures, tests or a pipeline        | Share the exact failing check and commit so another session can distinguish its own regression. |
+| Integration order                    | Confirm which dependency is ready and which action must wait, within existing permissions.      |
+
+This can catch incompatible assumptions before integration, avoid duplicate
+investigation and spare you from carrying messages between terminals. Work that
+doesn't depend on the answer continues. A queued question stays unresolved until
+the peer answers; a test result stays tied to the revision actually checked.
+
+The skill coordinates peers already doing authorized work. It does not create an
+agent team, assign new tasks, take over another worktree or grant merge/release
+authority. Discovery and messaging depend on the host's available integrations;
+when there is no usable route, it prepares a message for you and reports that it
+hasn't been delivered.
 
 ## Example prompts
 
@@ -194,6 +238,19 @@ remain open. Verify the peer and reply route; keep each session's ownership inta
 
 </details>
 
+<details>
+<summary><strong>Coordinate overlapping features in separate worktrees</strong></summary>
+
+```text
+Use psy-session-coordination to contact the session building search filters.
+Our CSV export work depends on the same filter contract. Confirm the fields,
+empty-value behavior and relevant commit; agree who owns any shared service
+changes. Continue independent export work while waiting, and keep each session's
+existing scope and worktree ownership intact.
+```
+
+</details>
+
 ## Optional coordination tools
 
 The coordination skill includes local session discovery and optional path claims.
@@ -212,6 +269,11 @@ Keep existing repository ownership tooling where present. The portable writer
 refuses setup and writes when it detects supported existing systems. Listing is
 read-only; hooks report presence without claiming paths. Installing hooks or
 initializing claims is a deliberate setup action.
+
+Optional hooks retain local session metadata, and their installer saves full
+backups of existing agent settings. Backups can include credentials already in
+those settings. Read [local data and retention](skills/psy-session-coordination/references/setup.md#local-data-and-retention)
+before enabling hooks; removing hook commands does not erase those files.
 
 ## Inside the repository
 

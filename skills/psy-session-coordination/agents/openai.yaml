@@ -1,4 +1,4 @@
 interface:
   display_name: "Psy Session Coordination"
-  short_description: "Coordinate overlapping Codex and Claude sessions"
-  default_prompt: "Use $psy-session-coordination to exchange findings with the relevant existing session."
+  short_description: "Coordinate overlapping features across worktrees"
+  default_prompt: "Use $psy-session-coordination to resolve a shared dependency with the relevant existing session while preserving each worktree's ownership."
