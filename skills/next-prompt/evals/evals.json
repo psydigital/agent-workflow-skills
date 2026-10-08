@@ -1,0 +1,196 @@
+{
+  "skill_name": "next-prompt",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Based on our current session, write the prompt I should give the next agent. Keep it tight.",
+      "expected_output": "A concise copyable prompt using visible context, with only the outcome, decisive sources/scope, first useful action and verification; no mandatory metadata.",
+      "files": [],
+      "expectations": [
+        "Uses current session as the context source when no handoff file is provided",
+        "Does not ask the next agent to perform unrelated work",
+        "Keeps the generated prompt concise rather than duplicating all instructions"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Use /path/to/handoff.md and write the next prompt for a fresh context session. Discovery only.",
+      "expected_output": "A fresh-session prompt based on the explicit handoff path, preserving the discovery-only boundary and referencing the handoff as a source.",
+      "files": [],
+      "expectations": [
+        "Treats the explicit handoff file as the primary source",
+        "Preserves the read-only discovery boundary",
+        "Includes concrete first actions and expected output"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Improve this prompt for the next agent: 'Look at the app and fix the network stuff. Read all docs. Do it properly and test everything.'",
+      "expected_output": "A tighter prompt that replaces vague instructions with concrete scope, source selection, and verification placeholders without inventing missing task details.",
+      "files": [],
+      "expectations": [
+        "Does not invent exact requirements that were missing from the source prompt",
+        "Adds placeholders or asks for missing facts when needed",
+        "Removes vague instructions like read all docs and test everything"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "/next-prompt using the current session and this handoff note: 'Earlier plan said implement immediately, but latest user instruction says discovery only.'",
+      "expected_output": "A concise next-session prompt that merges current session and handoff context while preserving the latest discovery-only instruction over the older implementation plan.",
+      "files": [],
+      "expectations": [
+        "Recognizes direct /next-prompt invocation",
+        "Uses hybrid context when both current session and handoff-like content are present",
+        "Gives newest explicit user instruction priority over older handoff content"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "/next-prompt for the current session. Also tell the next agent the single most important thing I might be missing, but do not derail the task.",
+      "expected_output": "A concise manually reviewable next prompt that includes at most one bounded First verify, Watch for, or Assumption line when it affects the next agent's first actions or verification.",
+      "files": [],
+      "expectations": [
+        "Keeps the generated prompt centered on the latest user goal",
+        "Uses the missing-thing pass only as a bounded prompt-sharpening note",
+        "Does not turn the next session into a broader investigation unless the user asked for that"
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "/next-prompt from this long session with several decisions that are not in files yet. If a handoff would be better, say so, but still give me the prompt.",
+      "expected_output": "A copy-paste next prompt plus a short handoff recommendation when durable context would materially improve a fresh session.",
+      "files": [],
+      "expectations": [
+        "Still outputs a manually checkable next prompt",
+        "Recommends /handoff only as a user-controlled step, not as an automatic action",
+        "Explains the handoff recommendation in one concise sentence"
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "/next-prompt for a concrete follow-up: finish the scoped branch review, run the project finish workflow if clean, and report the final commit and worktree state.",
+      "expected_output": "A concise next prompt for a concrete finish/merge session without adding a persistent goal that the user did not request.",
+      "files": [],
+      "expectations": [
+        "Includes the next prompt as the primary output",
+        "Does not add /goal or goal-candidate metadata",
+        "Keeps finish authority and worktree ownership explicit"
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "Please provide the full /goal prompt for a read-only release gate. I want the actual invocation, not just a prompt with a Goal heading.",
+      "expected_output": "A copy-paste prompt that starts with a literal /goal invocation, then includes scope, first actions, verification, output, and stop condition.",
+      "files": [],
+      "expectations": [
+        "Evaluates that /goal is appropriate because the user explicitly asked and the work is bounded and verifiable",
+        "Starts the generated prompt with literal /goal",
+        "Does not substitute a plain Goal: heading or Goal candidate metadata for the slash-command invocation",
+        "Includes a clear stop condition to prevent token-burning persistence"
+      ]
+    },
+    {
+      "id": 9,
+      "prompt": "Should this be a /goal? I just need a quick next prompt to ask whether the branch is clean or if we should close the session.",
+      "expected_output": "A concise response that rejects /goal as unnecessary for a quick routing/closeout question and provides the better lightweight next prompt or command.",
+      "files": [],
+      "expectations": [
+        "Evaluates /goal instead of blindly using it",
+        "Explains briefly why persistence is unnecessary",
+        "Routes toward a lightweight next prompt or next-step style action",
+        "Does not start the copy-paste artifact with /goal"
+      ]
+    },
+    {
+      "id": 10,
+      "prompt": "/next-prompt from a handoff marked Continuation mode: fresh-session-required after repeated compaction and interrupted subagents. The user has provided the handoff content and verified that the remaining read-only task is transferable with no owner-bound obligations.",
+      "expected_output": "Honour the transferable fresh-session-required mode; reference its handoff and named artifacts without full transcript reconstruction or delegation.",
+      "files": [],
+      "expectations": [
+        "Honors fresh-session-required",
+        "Does not tell the user to resume or fork the degraded session",
+        "Rejects full transcript reconstruction and fork_turns=all",
+        "Keeps subagents opt-in and scope-driven"
+      ]
+    },
+    {
+      "id": 11,
+      "prompt": "/next-prompt for a responsive narrow session whose handoff says resume-acceptable and points to a committed plan.",
+      "expected_output": "A concise prompt that may resume safely, references the plan, and does not add context-reset warnings without evidence.",
+      "files": [],
+      "expectations": [
+        "Honors resume-acceptable",
+        "Does not force a fresh session for every handoff",
+        "Uses the committed plan as source of truth"
+      ]
+    },
+    {
+      "id": 12,
+      "prompt": "/next-prompt from a handoff marked Continuation mode: fresh-session-required, but live repository evidence now shows that the active claimed worktree still needs mutation and /finish by owner session example-owner.",
+      "expected_output": "A prompt explicitly targeted at resuming owner session example-owner, because live session-bound repository authority overrides the stale fresh-session mode for mutation and closeout. It may offer a separate fresh prompt only for explicitly read-only evidence gathering that returns results to the owner.",
+      "files": [],
+      "expectations": [
+        "Overrides the stale fresh-session mode using newer live capability evidence",
+        "Targets the existing owner session for mutation and closeout",
+        "Does not imply that a fresh session inherits the claim",
+        "Limits any fresh session to read-only work that reports back to the owner"
+      ]
+    },
+    {
+      "id": 13,
+      "prompt": "/next-prompt for a multi-file implementation that needs an isolated worktree because master is ahead. I did not ask for /build or /goal.",
+      "expected_output": "A concise plain prompt that mentions the repository-required worktree without adding /build, /goal, planning, or subagents.",
+      "files": [],
+      "expectations": [
+        "Uses a plain prompt invocation",
+        "Does not add /build merely because a worktree is required",
+        "Does not add /goal merely because work remains",
+        "Keeps planning and subagents out unless explicitly requested"
+      ]
+    },
+    {
+      "id": 14,
+      "prompt": "Give me the actual /build prompt for this repository's full build workflow.",
+      "expected_output": "A prompt using literal /build because the user explicitly requested that workflow.",
+      "files": [],
+      "expectations": [
+        "Uses literal /build",
+        "Does not substitute a plain prompt",
+        "Keeps the requested scope and verification bounded"
+      ]
+    },
+    {
+      "id": 15,
+      "prompt": "Tighten this CMS prompt: \"Read the supplied incident note and identify the likely cause of the failing local component preview. Read-only; do not edit files or connect to production.\"",
+      "expected_output": "One short copyable prompt preserving local read-only scope; no framework-specific commands or repository sweep.",
+      "files": [],
+      "expectations": [
+        "Does not run Git merely to edit prose",
+        "Preserves local read-only scope",
+        "Does not add default prompt metadata or a minimum word count"
+      ]
+    },
+    {
+      "id": 16,
+      "prompt": "We just used next-step to choose an independent storefront theme review. The supplied live target/ownership evidence remains current and no files changed. Write the prompt to review the named unpublished theme source locally; publishing is not authorized.",
+      "expected_output": "A concise prompt reusing fresh state and selecting verification from that storefront project.",
+      "files": [],
+      "expectations": [
+        "Does not repeat the completed repository sweep",
+        "Preserves no-publish authority",
+        "Does not inject backend test DB or guessed npm scripts"
+      ]
+    },
+    {
+      "id": 17,
+      "prompt": "Everything requested in this session is complete and no follow-up task exists. /next-prompt",
+      "expected_output": "State completion instead of inventing another task.",
+      "files": [],
+      "expectations": [
+        "Does not manufacture a new workstream",
+        "Does not write an empty continuation prompt"
+      ]
+    }
+  ]
+}

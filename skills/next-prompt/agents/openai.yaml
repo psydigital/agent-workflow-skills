@@ -1,0 +1,4 @@
+interface:
+  display_name: "Next Prompt"
+  short_description: "Write a concise continuation that preserves scope"
+  default_prompt: "Use $next-prompt to write a short continuation from this session."

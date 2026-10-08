@@ -1,0 +1,172 @@
+{
+  "skill_name": "next-step",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Anything else needed here, review, or /finish?",
+      "expected_output": "A single recommendation based on live or stated branch/worktree state, preferring Finish only when integration/teardown is the actual next step.",
+      "files": [],
+      "expectations": [
+        "Chooses exactly one recommendation label",
+        "Does not answer with a menu of review/finish/next-prompt options",
+        "Mentions checking live branch/worktree state before finish when needed"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "We finished the requested research, answered the question, and have no implementation or follow-up task. No files changed. What next?",
+      "expected_output": "Close: the research request is complete without another prompt, review, or finish.",
+      "files": [],
+      "expectations": [
+        "Chooses Close",
+        "Does not invent implementation or continuation",
+        "Does not run Git commands for this non-repository question"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Another session owns the unrelated uncommitted changes. Our research is complete and a documented independent read-only comparison remains for a fresh session. Should we write its next prompt?",
+      "expected_output": "Next prompt for the concrete read-only comparison; unrelated dirty work stays untouched.",
+      "files": [],
+      "expectations": [
+        "Chooses Next prompt",
+        "Does not block solely on unrelated dirty work",
+        "Preserves the read-only boundary and foreign ownership"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Clean direct-master commit is done and pushed. Is any /finish required?",
+      "expected_output": "A concise recommendation that Finish is unnecessary when work was committed directly on master/main with no worktree integration remaining.",
+      "files": [],
+      "expectations": [
+        "Does not propose worktree teardown for direct-master work",
+        "Explains that finish is unnecessary when no branch/worktree remains",
+        "Keeps the answer in the required Recommendation/Why/Action format"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "This session has a lot of decisions in chat that are not in docs yet. New session or continue?",
+      "expected_output": "A Handoff recommendation when durable context is needed before a fresh next prompt.",
+      "files": [],
+      "expectations": [
+        "Recommends Handoff when context would be lost",
+        "Separates handoff from next-prompt generation",
+        "Does not create the handoff automatically"
+      ]
+    },
+    {
+      "id": 6,
+      "prompt": "We implemented a risky auth change and tests pass. What next?",
+      "expected_output": "A Review recommendation before finish or next prompt because the change is risk-sensitive.",
+      "files": [],
+      "expectations": [
+        "Recommends Review for security-sensitive implementation",
+        "Names the review focus",
+        "Does not run the review itself"
+      ]
+    },
+    {
+      "id": 7,
+      "prompt": "/next-step",
+      "expected_output": "A concise next-stage recommendation using available current-session context, or Ask user if there is not enough state to choose safely.",
+      "files": [],
+      "expectations": [
+        "Recognizes direct /next-step invocation",
+        "Chooses exactly one recommendation label",
+        "Uses Ask user rather than listing options when context is insufficient"
+      ]
+    },
+    {
+      "id": 8,
+      "prompt": "The repo is clean and the useful state is captured, but this resumed session is slow, has compacted twice, and an interrupted reviewer was replaced. Continue here or start fresh? The user wants a fresh session for the remaining documented read-only comparison, which has no owner-bound actions.",
+      "expected_output": "A Next prompt recommendation because authoritative state is already captured and no owner-bound execution is stated; another handoff would be redundant.",
+      "files": [],
+      "expectations": [
+        "Chooses Next prompt as the single label",
+        "Names concrete degradation evidence",
+        "Does not create a redundant handoff when durable state is already captured"
+      ]
+    },
+    {
+      "id": 9,
+      "prompt": "This owner session is slow and has uncommitted work in its claimed worktree. Should I hand it off now?",
+      "expected_output": "A Continue here recommendation that resolves or safely checkpoints owner-bound dirty work before a fresh session.",
+      "files": [],
+      "expectations": [
+        "Does not let session-health routing bypass dirty ownership",
+        "Chooses Continue here",
+        "Explains the safe checkpoint needed before handoff"
+      ]
+    },
+    {
+      "id": 10,
+      "prompt": "This was a long session, but the repo is clean and every decision is already in the committed plan. It is responsive. What next? The requested planning deliverable is complete; no implementation or next task was requested.",
+      "expected_output": "Close: completed planning needs no manufactured continuation despite the session length.",
+      "files": [],
+      "expectations": [
+        "Chooses Close",
+        "Does not infer degradation from duration",
+        "Does not invent an implementation request"
+      ]
+    },
+    {
+      "id": 11,
+      "prompt": "This slow owner session has a clean active claimed worktree. More implementation and eventual /finish remain bound to this exact session ID. What next?",
+      "expected_output": "A Continue here recommendation that keeps owner-bound work in this session, using /compact or exit plus codex resume with the same ID if context relief is needed. It must not recommend Handoff or a fresh mutation session solely because the owner session is degraded.",
+      "files": [],
+      "expectations": [
+        "Chooses Continue here",
+        "Keeps source mutation and closeout in the existing owner session",
+        "Offers /compact or same-ID resume as the context-relief path",
+        "Does not recommend a fresh session for owner-bound work"
+      ]
+    },
+    {
+      "id": 12,
+      "prompt": "The continuation prompt has already been used, another authorized session owns the new worktree, and this session has no remaining work or closeout. Is this session essentially finished?",
+      "expected_output": "A Close recommendation that directly says this session can end and identifies the other authorized owner session as the place to continue. It must not recommend Next prompt, Handoff, Review, or Finish.",
+      "files": [],
+      "expectations": [
+        "Chooses Close as the single label",
+        "Directly says the current session can end",
+        "Does not manufacture another next prompt or handoff",
+        "Does not imply authority over the other session's worktree"
+      ]
+    },
+    {
+      "id": 13,
+      "prompt": "A cosmetic badge spacing edit is committed directly on main. Scoped source/diff checks passed at this exact checkpoint. No behaviour changed, no review is required, and no integration or push was requested. What next?",
+      "expected_output": "Close without another review, browser, or finish.",
+      "files": [],
+      "expectations": [
+        "Chooses Close",
+        "Does not infer review from any code change",
+        "Does not invent push authority"
+      ]
+    },
+    {
+      "id": 14,
+      "prompt": "We implemented a retry handler that changes submission behaviour. It is uncommitted and owned by this session. Project rules require focused behaviour tests; only typechecking has passed. What next?",
+      "expected_output": "Continue here to add/run the focused retry and duplicate-submission regression tests.",
+      "files": [],
+      "expectations": [
+        "Chooses Continue here",
+        "Does not treat typechecking as interaction proof",
+        "Preserves the focused behaviour-test requirement"
+      ]
+    },
+    {
+      "id": 15,
+      "prompt": "The current branch was reviewed and committed; its exact authorized integration status was checked immediately above. No source or Git state has changed. /next-step: is anything left for this session?",
+      "expected_output": "Use the fresh evidence and Close if the stated integration completed all obligations.",
+      "files": [],
+      "expectations": [
+        "Reuses fresh relevant evidence",
+        "Does not inspect unrelated history or worktrees",
+        "Does not automatically repeat the completed review"
+      ]
+    }
+  ]
+}

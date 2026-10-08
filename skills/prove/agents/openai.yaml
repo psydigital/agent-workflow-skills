@@ -1,0 +1,4 @@
+interface:
+  display_name: "Prove"
+  short_description: "Support completion claims with appropriate evidence"
+  default_prompt: "Use $prove to verify this change within the authorized scope."

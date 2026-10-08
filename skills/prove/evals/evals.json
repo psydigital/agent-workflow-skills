@@ -1,0 +1,60 @@
+{
+  "skill_name": "prove",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "A web application project defines npm script typecheck and requires focused Vitest coverage for retry behaviour. We changed the retry handler and only linted it. Verify completion.",
+      "expected_output": "Discover/use the actual typecheck script only where relevant, and run the focused retry/duplicate-submission tests before claiming the interaction is verified.",
+      "files": [],
+      "expectations": [
+        "Does not invent type-check",
+        "Requires relevant behaviour evidence",
+        "Does not run every verification category"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "The CMS task is read-only source review of a named plugin endpoint. No files changed and production access is not authorized. Prove an authorization finding.",
+      "expected_output": "Trace the actual route/capability checks and cite source lines; distinguish source from runtime proof without inventing framework-specific commands or changing a database.",
+      "files": [],
+      "expectations": [
+        "Reads guards that may disprove the finding",
+        "Preserves read-only scope",
+        "Does not invent framework-specific isolation commands"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "A storefront theme has a local Theme Check command in its project instructions. Only section spacing changed; the user requested local source verification and no publish. Verify the change.",
+      "expected_output": "Use scoped source/diff and required theme checks; report the local evidence and any visual uncertainty.",
+      "files": [],
+      "expectations": [
+        "Derives checks from this project",
+        "Does not publish or connect to a live store",
+        "Does not require an unrelated PHP suite or new interaction test"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "The exact changed source, check command, passing output, checkpoint and environment were verified above and remain unchanged. We are now reporting the same completed change.",
+      "expected_output": "Reuse valid evidence and summarize the outcome without another full run.",
+      "files": [],
+      "expectations": [
+        "Does not manufacture repeat verification",
+        "Does not equate local proof with deployment",
+        "Reports actual results concisely"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "A JSON settings file parses and the skill frontmatter validates. Have we proved the agent will choose the right next step?",
+      "expected_output": "Explain that these prove structure and configuration only; decision quality needs representative agent executions.",
+      "files": [],
+      "expectations": [
+        "Does not claim behavioural evaluation passed",
+        "Names the missing form of evidence",
+        "Does not automatically spawn agents or start a broad evaluation workflow"
+      ]
+    }
+  ]
+}
