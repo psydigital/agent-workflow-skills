@@ -6626,6 +6626,57 @@ def _private_report_digest(root: Path) -> str:
             os.close(state_descriptor)
 
 
+def _github_push_identity(
+    repository: str,
+    runner: Runner,
+) -> tuple[int, str]:
+    metadata = _gh_json(repository, "", runner)
+    if not isinstance(metadata, dict):
+        raise AuditInputError("GitHub push identity is invalid")
+    owner_name, repository_name = repository.split("/", 1)
+    owner = metadata.get("owner")
+    visibility = metadata.get("visibility")
+    if (
+        not _positive_integer(metadata.get("id"))
+        or metadata.get("full_name") != repository
+        or metadata.get("name") != repository_name
+        or not isinstance(owner, dict)
+        or owner.get("login") != owner_name
+        or visibility not in {"private", "public"}
+        or type(metadata.get("private")) is not bool
+        or metadata["private"] != (visibility == "private")
+    ):
+        raise AuditInputError("GitHub push identity is invalid")
+    return metadata["id"], visibility
+
+
+def inspect_github_push_target(
+    repository: str,
+    policy: Policy,
+    runner: Runner = run_github_command,
+) -> GitHubState:
+    if not isinstance(policy, Policy) or repository != policy.repository:
+        raise AuditInputError("GitHub push repository does not match policy")
+    runner = _InspectionRunner(runner)
+    _github_authenticated(runner)
+    identity = _github_push_identity(repository, runner)
+    if identity[1] == "private":
+        if _github_push_identity(repository, runner) != identity:
+            raise AuditInputError("GitHub push identity changed during inspection")
+        # Private upload enables bootstrap; it is never publication evidence.
+        return GitHubState("private", "", True, (), False)
+
+    state = inspect_github_identity(repository, policy, runner)
+    if not state.complete:
+        return state
+    if (
+        state.visibility != "public"
+        or _github_push_identity(repository, runner) != identity
+    ):
+        raise AuditInputError("GitHub push identity changed during inspection")
+    return state
+
+
 def main_pre_push(
     argv: Sequence[str] | None = None,
     stdin: TextIO = sys.stdin,
@@ -6651,7 +6702,7 @@ def main_pre_push(
             != policy.repository
         ):
             return ExitCode.REMOTE_OR_PROTECTION
-        state = inspect_github_identity(
+        state = inspect_github_push_target(
             policy.repository, policy, runner
         )
         if not state.complete:

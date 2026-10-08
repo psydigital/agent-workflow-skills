@@ -63,6 +63,20 @@
       "sha256": "1564e9d2d9f54d057b28c2e294a51c94e77ee74825e7679065669884ebaf871b",
       "rationale": "The reviewed scanner regex matches its own Python assignment to match.group; this is code syntax, not a configured hostname or private endpoint.",
       "agent_material": false
+    },
+    {
+      "rule_id": "private.email",
+      "path": ".github/scripts/public-repository-safety.py",
+      "sha256": "618a35eb4f4caf86f6246132d96ab960ed6ceaeba393e88ab1dbb0a481e43a3d",
+      "rationale": "The reviewed scanner validates the standard GitHub SSH transport username and public hostname; this string is not a personal email address or credential.",
+      "agent_material": false
+    },
+    {
+      "rule_id": "private.hostname",
+      "path": ".github/scripts/public-repository-safety.py",
+      "sha256": "618a35eb4f4caf86f6246132d96ab960ed6ceaeba393e88ab1dbb0a481e43a3d",
+      "rationale": "The reviewed scanner regex matches its own Python assignment to match.group; this is code syntax, not a configured hostname or private endpoint.",
+      "agent_material": false
     }
   ],
   "ci": {
