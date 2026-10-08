@@ -1,0 +1,4 @@
+interface:
+  display_name: "Psy Next Step"
+  short_description: "Choose the next useful action or close the session"
+  default_prompt: "Use $psy-next-step to decide what remains for this session."

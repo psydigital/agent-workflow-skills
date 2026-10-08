@@ -1,0 +1,35 @@
+{
+  "skill_name": "psy-finish",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Use psy-finish. The verified direct commit is already the requested final result; no integration or release was requested.",
+      "expected_output": "Confirm completion without manufacturing a merge, next prompt or cleanup."
+    },
+    {
+      "id": 2,
+      "prompt": "Use psy-finish to merge this owned branch locally. The documented helper supports --local-only.",
+      "expected_output": "Use the local-only repository workflow, verify exact integration state, and do not push."
+    },
+    {
+      "id": 3,
+      "prompt": "Use psy-finish to prepare this branch for review; do not merge or push.",
+      "expected_output": "Verify scoped readiness and report the candidate while preserving explicit integration restrictions."
+    },
+    {
+      "id": 4,
+      "prompt": "Use psy-finish. One required regression test fails and there are unrelated dirty files.",
+      "expected_output": "Address or report the failing check; never stage unrelated changes or claim the branch ready."
+    },
+    {
+      "id": 5,
+      "prompt": "Use psy-finish to merge the branch. This repository has no custom workflow; the destination base and merge strategy are verified.",
+      "expected_output": "Use ordinary Git within the authorized scope after checkout/ownership checks; do not require custom tooling or delete resources without authority."
+    },
+    {
+      "id": 6,
+      "prompt": "Use psy-finish. The required closeout helper refused because the worktree belongs to another session.",
+      "expected_output": "Report the ownership blocker and use the supported capability route; never retry with raw Git or filesystem removal."
+    }
+  ]
+}

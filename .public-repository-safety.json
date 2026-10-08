@@ -1,0 +1,87 @@
+{
+  "schema_version": 1,
+  "repository": "psydigital/agent-workflow-skills",
+  "public_refs": {
+    "branches": [
+      "refs/heads/main"
+    ],
+    "tag_patterns": []
+  },
+  "public_identities": {
+    "email_patterns": [
+      "^82805362\\+psydigital@users\\.noreply\\.github\\.com$"
+    ]
+  },
+  "path_exceptions": [
+    {
+      "rule_id": "agent.material",
+      "path": "AGENTS.md",
+      "sha256": "51aaf9342dc80dd44889d83a354b107a220a7abd9b2fcbc9092f9d589c6559de",
+      "rationale": "Reviewed generic instructions for editing this public skills snapshot; contains no private project, session or personal material.",
+      "agent_material": true
+    },
+    {
+      "rule_id": "agent.material",
+      "path": "AGENTS.md",
+      "sha256": "5918e90772656e65712165ed4e796362c53fd1ec92f0075fbaca8669a15ccdcc",
+      "rationale": "Reviewed generic instructions for editing this public skills snapshot; contains no private project, session or personal material.",
+      "agent_material": true
+    },
+    {
+      "rule_id": "agent.material",
+      "path": "AGENTS.md",
+      "sha256": "acf808b91ebeade55e131cbb4ecf16166ff9708cdf8721211e194103d144b4d0",
+      "rationale": "Reviewed generic instructions for editing this public skills snapshot; contains no private project, session or personal material.",
+      "agent_material": true
+    },
+    {
+      "rule_id": "agent.material",
+      "path": "CLAUDE.md",
+      "sha256": "a54ff182c7e8acf56acfd6e4b9c3ff41e2c41a31c9b211b2deb9df75d9a478f9",
+      "rationale": "Reviewed relative link to the generic public AGENTS.md instructions; contains only the public target filename.",
+      "agent_material": true
+    },
+    {
+      "rule_id": "agent.material",
+      "path": "GEMINI.md",
+      "sha256": "a54ff182c7e8acf56acfd6e4b9c3ff41e2c41a31c9b211b2deb9df75d9a478f9",
+      "rationale": "Reviewed relative link to the generic public AGENTS.md instructions; contains only the public target filename.",
+      "agent_material": true
+    }
+  ],
+  "synthetic_exceptions": [],
+  "ci": {
+    "workflow": ".github/workflows/public-repository-safety.yml",
+    "check": "Public repository safety"
+  },
+  "protection": {
+    "branches": [
+      "main"
+    ],
+    "tag_patterns": [],
+    "require_pull_request": true,
+    "require_current_branch": true,
+    "require_conversation_resolution": true,
+    "deny_force_push": true,
+    "deny_deletion": true
+  },
+  "manual_documents": [
+    "README.md",
+    "LICENSE",
+    "AGENTS.md",
+    "skills/psy-build/SKILL.md",
+    "skills/psy-finish/SKILL.md",
+    "skills/psy-next-prompt/SKILL.md",
+    "skills/psy-next-step/SKILL.md",
+    "skills/psy-prove/SKILL.md",
+    "skills/psy-session-coordination/SKILL.md",
+    "skills/psy-session-coordination/references/discovery.md",
+    "skills/psy-session-coordination/references/ownership-records.md",
+    "skills/psy-session-coordination/references/portable-claims.md",
+    "skills/psy-session-coordination/references/setup.md",
+    "skills/psy-session-coordination/references/transports.md"
+  ],
+  "tools": {
+    "gitleaks": "8.30.1"
+  }
+}

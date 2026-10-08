@@ -1,7 +1,10 @@
-# Maintaining these skills
+# Working on this snapshot
 
-The directories under `skills/` are the maintained source. Installed copies
-should link here or be refreshed from here; do not maintain competing copies.
+This repository is an as-is publication snapshot with no promised maintenance.
+The directories under `skills/` are its source. Existing private installations
+and repository workflows are independent; do not relink, rename, synchronize or
+replace them as part of editing this snapshot. New users may install the public
+skills deliberately.
 
 Keep instructions portable. Do not introduce personal names, usernames, email
 addresses, home-directory paths, client or private project names, live session
@@ -18,7 +21,7 @@ Validate changed frontmatter and JSON, check relative links, and run the discove
 helper tests when changing its code or documented contracts:
 
 ```sh
-node --test skills/session-coordination/scripts/*.test.mjs
+node --test skills/psy-session-coordination/scripts/*.test.mjs
 ```
 
 The `evals/evals.json` files describe behavioral cases. Parsing them does not

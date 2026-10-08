@@ -1,0 +1,4 @@
+interface:
+  display_name: "Psy Finish"
+  short_description: "Close out work through the current project's workflow"
+  default_prompt: "Use $psy-finish to complete the authorized closeout for this branch."

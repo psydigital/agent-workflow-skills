@@ -1,0 +1,4 @@
+interface:
+  display_name: "Psy Prove"
+  short_description: "Support completion claims with appropriate evidence"
+  default_prompt: "Use $psy-prove to verify this change within the authorized scope."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Psy Build"
+  short_description: "Deliver changes using the current project's workflow"
+  default_prompt: "Use $psy-build to implement and verify the requested change using this repository's workflow."

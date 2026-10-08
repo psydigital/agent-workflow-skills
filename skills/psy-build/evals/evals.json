@@ -1,0 +1,35 @@
+{
+  "skill_name": "psy-build",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Use psy-build to fix the requested parser issue. This repository has no custom workflow, only a documented npm test task.",
+      "expected_output": "Implement within scope, use the documented tests, and do not fabricate slash commands or infrastructure."
+    },
+    {
+      "id": 2,
+      "prompt": "Use psy-build. Project instructions require scripts/create-workspace.sh for isolation and scripts/preview.sh for an approved preview.",
+      "expected_output": "Discover and use the project helpers with their ownership and data rules; no generic replacement or server startup without a preview need."
+    },
+    {
+      "id": 3,
+      "prompt": "Compile the CSS using npm run build.",
+      "expected_output": "Perform the compilation task without selecting an end-to-end development workflow."
+    },
+    {
+      "id": 4,
+      "prompt": "Use psy-build for a local fix only. The local workflow also pushes and deploys, with no scoped mode.",
+      "expected_output": "Do compatible local work and stop before the combined external step; no implied release authority."
+    },
+    {
+      "id": 5,
+      "prompt": "Write a prompt that asks another session to use psy-build.",
+      "expected_output": "Draft the prompt without creating worktrees, running tests or invoking the implementation workflow."
+    },
+    {
+      "id": 6,
+      "prompt": "Use psy-build in the existing checkout. Its claims identify a different owning session.",
+      "expected_output": "Preserve ownership and resolve the supported authorization path; do not take over or treat stale presence as permission."
+    }
+  ]
+}
