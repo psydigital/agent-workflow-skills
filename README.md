@@ -1,98 +1,266 @@
 # Psy agent workflow skills
 
-Six portable skills for implementation, verification, closeout, continuation and
-coordination between existing agent sessions.
+```text
+ ____   ____ __   __
+|  _ \ / ___|\ \ / /
+| |_) |\___ \ \ V /
+|  __/  ___) | | |
+|_|    |____/  |_|
 
-**Published as-is. No ongoing maintenance, updates or support are promised.**
-You are welcome to fork and adapt this snapshot under the [MIT license](LICENSE).
+ A G E N T   W O R K F L O W   S K I L L S
+```
 
-| Skill                                                                | Use it to                                                                                    |
-| -------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| [psy-build](skills/psy-build/SKILL.md)                               | Implement and verify an explicitly requested change using the current repository's workflow. |
-| [psy-finish](skills/psy-finish/SKILL.md)                             | Complete authorized verification, commit and integration steps.                              |
-| [psy-next-step](skills/psy-next-step/SKILL.md)                       | Choose one useful next action, including closing a completed session.                        |
-| [psy-next-prompt](skills/psy-next-prompt/SKILL.md)                   | Write a continuation prompt that preserves scope and authority.                              |
-| [psy-prove](skills/psy-prove/SKILL.md)                               | Verify changed behavior or substantiate a finding with scoped evidence.                      |
-| [psy-session-coordination](skills/psy-session-coordination/SKILL.md) | Exchange scoped questions and findings between existing sessions.                            |
+**Build with context. Finish with evidence. Know what comes next.**
+
+Seven portable skills to help an AI coding agent implement changes, check its
+work, coordinate with existing sessions and leave a useful handoff. They follow
+the current repository's conventions and tools, so you can bring them to different
+projects without bringing an entire development environment along.
+
+[Explore the skills](#skill-index) · [Install](#installation) ·
+[Try a prompt](#example-prompts) · [MIT licensed](LICENSE)
+
+> **An as-is snapshot.** No ongoing maintenance, updates or support are promised.
+> Fork it, adapt it and make it your own.
+
+## Contents
+
+- [Start here](#start-here)
+- [Skill index](#skill-index)
+- [Installation](#installation)
+- [How the workflows fit together](#how-the-workflows-fit-together)
+- [Example prompts](#example-prompts)
+- [Optional coordination tools](#optional-coordination-tools)
+- [Inside the repository](#inside-the-repository)
+- [Verification](#verification)
+- [Maintenance and license](#maintenance-and-license)
+
+## Start here
+
+If you're unsure what to do next, start with **`psy-next-step`**. It can recommend
+continuing, reviewing, finishing, handing off or simply closing a completed task.
+
+For a concrete implementation request, use **`psy-build`**. When the work is ready
+for closeout, use **`psy-finish`**. Both discover the current repository's workflow
+and keep the task within the authority you've given the agent.
+
+For a transition between sessions, use **`psy-handoff`** to save the context that
+needs to survive, and **`psy-next-prompt`** for a short instruction to continue.
+
+You can install the whole collection or pick individual skills. Each has a
+fallback for optional companion skills that aren't installed.
+
+## Skill index
+
+| You want to…                 | Skill                                                                | What it brings                                                                         |
+| ---------------------------- | -------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| Implement a change           | [psy-build](skills/psy-build/SKILL.md)                               | Scoped implementation, repository-aware setup and meaningful verification.             |
+| Finish the work              | [psy-finish](skills/psy-finish/SKILL.md)                             | Verification, commits and authorized integration through the project's own procedures. |
+| Decide what's next           | [psy-next-step](skills/psy-next-step/SKILL.md)                       | One useful recommendation, including stopping when the work is complete.               |
+| Save context for later       | [psy-handoff](skills/psy-handoff/SKILL.md)                           | A durable record of the task, decisions, evidence, ownership and remaining work.       |
+| Write the next instruction   | [psy-next-prompt](skills/psy-next-prompt/SKILL.md)                   | A concise, copyable prompt for the correct authorized session.                         |
+| Establish what is proven     | [psy-prove](skills/psy-prove/SKILL.md)                               | Evidence that matches the claim, with clear limits on what was checked.                |
+| Coordinate existing sessions | [psy-session-coordination](skills/psy-session-coordination/SKILL.md) | Scoped peer questions and findings, with verified identity and delivery routes.        |
 
 ## Installation
 
-Use the [Skills CLI](https://github.com/vercel-labs/skills) to select skills:
+Use the [Skills CLI](https://github.com/vercel-labs/skills) to install into your
+agent's skills directory. See the [CLI documentation](https://skills.sh/docs/cli)
+for supported installation options.
+
+> **Before publication:** install from the local checkout with `npx skills add .`.
+> The GitHub commands below are for the published snapshot.
+
+**Choose interactively:**
 
 ```sh
 npx skills add psydigital/agent-workflow-skills
 ```
 
-Install the complete collection:
+**Install all seven:**
 
 ```sh
 npx skills add psydigital/agent-workflow-skills --skill '*'
 ```
 
-Or install from a local checkout with `npx skills add .`. Installing the files
-does not install lifecycle hooks, register slash commands in every host, or replace
-a repository's build and finish commands. Invocation syntax depends on the agent.
-The `psy-` prefix distinguishes this collection in shared skill directories.
+**Pick a pair:**
 
-## Repository-aware workflows
+```sh
+npx skills add psydigital/agent-workflow-skills --skill psy-next-step --skill psy-next-prompt
+```
 
-Start with `psy-build` when a full development workflow is requested. It discovers
-repository instructions, local skills and documented setup/check scripts. Use
-`psy-finish` for authorized closeout. Existing project workflows supply their
-implementation, including worktree, development-server and cleanup procedures.
-Without custom workflows, the skills guide ordinary scoped development and Git
-operations within the user's authority. An asset compilation task is not a full
-implementation workflow. Worktrees and servers are used only where needed.
+The `psy-` prefix distinguishes these skills in shared skill directories.
+Invocation syntax depends on your agent: the plain-language prompts below are a
+useful starting point. Installing skill files doesn't automatically install
+hooks, start servers or replace a repository's existing commands.
 
-The other skills refer to these two entry points when appropriate and installed.
-Each skill also works on its own through verified local equivalents or plain
-instructions. No third-party skill pack, framework, claims system, database or
-agent orchestration package is a mandatory dependency.
+## How the workflows fit together
 
-Example requests:
+**`psy-build` and `psy-finish` are the development entry points.** They read
+repository instructions, discover the relevant local skills and scripts, and use
+the project's supported setup, checks and closeout procedures. Without a custom
+workflow, they guide ordinary scoped development and Git operations.
 
-- “Use psy-build to implement and verify this change using the repository's workflow.”
-- “Use psy-finish to prepare this branch for handback. Do not push or merge.”
-- “Use psy-next-step: should we continue, review, finish, hand off, or close?”
-- “Use psy-next-prompt to write a short continuation from this session.”
-- “Use psy-prove to verify this fix within the authorized scope.”
-- “Use psy-session-coordination to ask the existing review session about its findings.”
+**`psy-prove` supports either stage.** It helps the agent distinguish a source
+inspection from a passing test, and a local result from deployment evidence.
+**`psy-next-step`** chooses a useful action. **`psy-session-coordination`** helps
+when another existing session has relevant work or evidence.
 
-Implementation, review, integration, publication and deployment remain distinct
-operations. A recommendation or drafted prompt does not execute its contents.
+**`psy-handoff` and `psy-next-prompt` serve different needs:** the handoff is the
+saved context, and the prompt is the next instruction. A short task may only need
+a prompt. A long investigation may need a handoff with links to its evidence.
+Neither transfers another session's ownership or permission to act.
 
-## Optional session discovery
+Use only the pieces the task needs. A recommendation or drafted prompt doesn't
+execute its contents. Worktrees and review servers are used when required by the
+task or project workflow. An asset compilation command isn't treated as an
+entire development workflow.
 
-The coordination skill includes local session discovery and optional path claims,
-requiring Node.js 18+ and Git. It does not read chat transcripts or send messages.
-The [setup guide](skills/psy-session-coordination/references/setup.md) covers
-optional lifecycle hooks, manual registration and messaging prerequisites.
+The collection has no mandatory framework or third-party skill-pack dependency.
+Implementation, review, integration, publication and deployment remain separate
+operations, governed by the user's request and the repository's rules.
 
-Use existing repository ownership tooling where present. The optional
-[claims utility](skills/psy-session-coordination/references/portable-claims.md)
-refuses initialization and writes when it detects supported existing systems.
-Hooks report presence; they do not claim paths. Listing is read-only. Installation
-and claims initialization are explicit setup actions, not prerequisites for
-asking another session a question.
+## Example prompts
 
-## Verification and provenance
+Copy a prompt and replace the task details with your own.
+
+<details>
+<summary><strong>Build a change</strong></summary>
+
+```text
+Use psy-build to add pagination to the search results. Follow this repository's
+existing patterns, verify the changed behavior and report the local result.
+```
+
+</details>
+
+<details>
+<summary><strong>Finish a branch</strong></summary>
+
+```text
+Use psy-finish to verify and commit the owned changes on this branch.
+Keep the branch available for review; do not merge or push.
+```
+
+</details>
+
+<details>
+<summary><strong>Choose the next step</strong></summary>
+
+```text
+Use psy-next-step: should we continue here, review, finish, hand off,
+create a next prompt, or close this session?
+```
+
+</details>
+
+<details>
+<summary><strong>Save a handoff</strong></summary>
+
+```text
+Use psy-handoff to save the context needed to resume this investigation.
+Keep the current scope, ownership, findings and unresolved questions explicit.
+```
+
+</details>
+
+<details>
+<summary><strong>Write a continuation prompt</strong></summary>
+
+```text
+Use psy-next-prompt to write a concise continuation from this session.
+Preserve the remaining task, verified state and ownership restrictions.
+```
+
+</details>
+
+<details>
+<summary><strong>Verify a fix</strong></summary>
+
+```text
+Use psy-prove to verify this fix with the smallest meaningful checks.
+Explain what the evidence establishes and what remains unverified.
+```
+
+</details>
+
+<details>
+<summary><strong>Ask an existing session for its findings</strong></summary>
+
+```text
+Use psy-session-coordination to ask the existing review session which findings
+remain open. Verify the peer and reply route; keep each session's ownership intact.
+```
+
+</details>
+
+## Optional coordination tools
+
+The coordination skill includes local session discovery and optional path claims.
+The helpers require **Node.js 18+ and Git**. They don't read chat transcripts or
+send messages themselves; messaging uses a separately available transport.
+
+| Guide                                                                                | Covers                                                                       |
+| ------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------- |
+| [Setup](skills/psy-session-coordination/references/setup.md)                         | Optional lifecycle hooks, manual registration and prerequisites.             |
+| [Session discovery](skills/psy-session-coordination/references/discovery.md)         | Finding sessions and interpreting ownership, presence and advertised routes. |
+| [Delivery routes](skills/psy-session-coordination/references/transports.md)          | Choosing and verifying an available messaging transport.                     |
+| [Ownership records](skills/psy-session-coordination/references/ownership-records.md) | Reading supported repository records without changing their rules.           |
+| [Portable claims](skills/psy-session-coordination/references/portable-claims.md)     | Opt-in path ownership for repositories without existing ownership tooling.   |
+
+Keep existing repository ownership tooling where present. The portable writer
+refuses setup and writes when it detects supported existing systems. Listing is
+read-only; hooks report presence without claiming paths. Installing hooks or
+initializing claims is a deliberate setup action.
+
+## Inside the repository
+
+```text
+skills/
+|-- psy-build/
+|-- psy-finish/
+|-- psy-handoff/
+|-- psy-next-step/
+|-- psy-next-prompt/
+|-- psy-prove/
+`-- psy-session-coordination/
+    |-- SKILL.md
+    |-- agents/       Agent UI metadata
+    |-- references/   Setup, discovery, ownership and delivery guides
+    `-- scripts/      Local helpers and their tests
+```
+
+Every skill has a `SKILL.md` entry point and agent UI metadata. The six skills
+outside coordination also include behavioral scenarios in `evals/evals.json`.
+The repository's publication checks live separately under `.github/`.
+
+## Verification
+
+Run the coordination helper tests from the repository root:
 
 ```sh
 node --test skills/psy-session-coordination/scripts/*.test.mjs
 ```
 
-The `evals/evals.json` files describe behavioral scenarios for manual or agent
-assessment. They are not an automated evaluation runner or proof of model behavior.
-Repository safety CI checks publication hygiene; it does not certify agent decisions.
-See [snapshot editing guidance](AGENTS.md) before contributing changes.
+Tests use disposable repositories, settings files and session registries.
+Behavioral scenario files support manual or agent assessment; they aren't an
+automated evaluation runner or proof of model behavior. Publication safety checks
+inspect repository hygiene and don't certify agent decisions.
 
-This collection contains original workflow instructions and local coordination
-helpers. References to external tools describe integrations; those tools and
-third-party skill packs are not bundled. The vendored repository safety scanner
-supports publication checks and is separate from the installable skills.
+For changes to your own copy, follow the [snapshot editing guidance](AGENTS.md).
 
-## Snapshot status
+## Maintenance and license
 
-MIT licensed; no release cadence or support commitment. The publication copy is
-independent of existing private agent installations and project workflows. There
-is no automatic synchronization into those environments.
+This is an **as-is, MIT-licensed snapshot**. No ongoing maintenance, release
+cadence, compatibility updates or support are promised. You're welcome to fork
+and adapt it under the [license terms](LICENSE).
+
+The collection contains original workflow instructions and local coordination
+helpers. External tools and third-party skill packs mentioned in the guides
+aren't bundled. The vendored safety scanner supports repository publication checks
+and is separate from the installable skills.
+
+The publication copy is independent of existing private skill installations and
+project workflows. There is no automatic synchronization into those environments.
+
+[Back to top](#psy-agent-workflow-skills)

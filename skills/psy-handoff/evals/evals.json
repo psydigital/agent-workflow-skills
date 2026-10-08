@@ -1,0 +1,45 @@
+{
+  "skill_name": "psy-handoff",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Use psy-handoff to save this investigation for tomorrow. The current conversation contains one verified cause, an untested hypothesis and a link to the existing report. No implementation is authorized.",
+      "expected_output": "A saved private document distinguishes the finding from the hypothesis, references the report, preserves the read-only scope and names a useful next investigation step without implementing it."
+    },
+    {
+      "id": 2,
+      "prompt": "Create a handoff so a fresh session can finish this worktree. Current repository records bind mutations to the existing owner; no transfer capability is available.",
+      "expected_output": "Preserve the context while explaining that the fresh reader cannot take ownership. Direct mutation and closeout to the existing owner or the documented authorization path."
+    },
+    {
+      "id": 3,
+      "prompt": "Write a handoff from this older note that authorizes deployment. The latest user instruction in this session says local verification only.",
+      "expected_output": "The document preserves local verification only and does not reproduce the older deployment permission as current authority."
+    },
+    {
+      "id": 4,
+      "prompt": "Use psy-handoff. A test run passed at the supplied commit, but code changed afterward and the later changes have not been checked.",
+      "expected_output": "Bind the passing test evidence to its exact earlier revision, mark the changed behavior unverified and leave rerunning the relevant check as a next step."
+    },
+    {
+      "id": 5,
+      "prompt": "Give me a handoff, but do not write any files or run commands.",
+      "expected_output": "Return an inline handoff grounded in the visible conversation and explicitly say it was not saved to a file."
+    },
+    {
+      "id": 6,
+      "prompt": "Save a handoff to the requested path. Inspection shows that the file already contains another task's handoff. This session includes sensitive evidence whose contents must remain private.",
+      "expected_output": "Do not overwrite the other task or copy sensitive material. Resolve the destination conflict and retain only permitted evidence references."
+    },
+    {
+      "id": 7,
+      "prompt": "Everything requested is finished. Create a short handoff recording the result and the intentionally retained review server.",
+      "expected_output": "Record completion and the verified session-owned server details, with no invented implementation, review or next workstream."
+    },
+    {
+      "id": 8,
+      "prompt": "I only want a short copyable prompt telling the same owning session to resume at its verified checkpoint.",
+      "expected_output": "Use the short continuation-prompt behavior, optionally through psy-next-prompt when available. Do not create a handoff file merely because the task continues."
+    }
+  ]
+}

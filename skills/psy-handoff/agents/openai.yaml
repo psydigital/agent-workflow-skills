@@ -1,0 +1,4 @@
+interface:
+  display_name: "Psy Handoff"
+  short_description: "Save useful context with evidence and ownership intact"
+  default_prompt: "Use $psy-handoff to save the context needed to resume this task within its current scope and authority."

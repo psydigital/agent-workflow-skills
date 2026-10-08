@@ -61,7 +61,9 @@ when permitted; it cannot take over the work.
   A direct main/master commit with no integration left does not need `/finish`.
 - **Handoff:** unfinished work needs durable context that would otherwise be lost
   at a requested or useful transition. Existing source artifacts may suffice.
-  Keep any owner-bound continuation directed to that owner.
+  Use `psy-handoff` when installed and document creation is requested; otherwise
+  describe the needed context directly. Keep owner-bound continuation directed
+  to that owner. Recommending a handoff alone does not create the file.
 - **Next prompt:** a concrete remaining task needs a concise instruction for an
   authorized later session, and needed state is already captured. Completed
   research alone does not imply a follow-up task.

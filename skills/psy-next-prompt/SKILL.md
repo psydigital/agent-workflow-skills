@@ -94,8 +94,9 @@ sections. Add a brief note outside it only when the user must resume a particula
 session, resolve a consequential assumption, or preserve uncaptured durable state.
 Recommend a handoff only when that state materially exceeds what the prompt or
 existing artifacts can carry. Still provide the requested prompt; create a
-handoff document only when asked. Long or slow sessions do not automatically need
-another handoff.
+handoff document only when asked, using `psy-handoff` when installed. A saved
+handoff holds durable context; this skill supplies the concise next instruction.
+Long or slow sessions do not automatically need another handoff.
 
 When tightening an existing prompt, preserve intent and meaningful restrictions;
 remove repetition and generic process language. Prefer references to sensitive

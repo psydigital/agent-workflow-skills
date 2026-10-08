@@ -86,6 +86,7 @@
     "AGENTS.md",
     "skills/psy-build/SKILL.md",
     "skills/psy-finish/SKILL.md",
+    "skills/psy-handoff/SKILL.md",
     "skills/psy-next-prompt/SKILL.md",
     "skills/psy-next-step/SKILL.md",
     "skills/psy-prove/SKILL.md",
