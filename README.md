@@ -39,15 +39,25 @@ and Git. It reads registered sessions and Git worktrees without reading chat
 transcripts. Supported ownership records are optional; their absence means
 ownership is unknown. See its [discovery reference](skills/session-coordination/references/discovery.md).
 
+Repositories without their own ownership tooling can opt into the bundled
+[workspace claims utility](skills/session-coordination/references/portable-claims.md).
+It records path ownership, rejects overlapping claims and allows the owning
+session to renew or release them. Discovery combines those claims with session
+presence. Existing repository ownership systems keep their original records and
+rules; the portable writer refuses to initialize or write when it detects one.
+
 Listing is read-only. Registration writes private local metadata. Installing hooks
 changes agent settings and is a separate setup action, never an automatic part of
 asking another session a question. Messaging requires an available, verified
 transport; the helper itself does not send messages.
 
+The [setup guide](skills/session-coordination/references/setup.md) covers
+discovery hooks, manual registration, messaging prerequisites and optional claims.
+
 ## Verification and maintenance
 
 ```sh
-node --test skills/session-coordination/scripts/agent-sessions.test.mjs
+node --test skills/session-coordination/scripts/*.test.mjs
 ```
 
 The other skills include behavioral evaluation cases in `evals/evals.json`.

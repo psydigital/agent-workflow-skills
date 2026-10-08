@@ -5,6 +5,7 @@ import path from "node:path";
 import crypto from "node:crypto";
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { readPortableClaims, claimStatus } from "./claims-store.mjs";
 
 const script = fileURLToPath(import.meta.url);
 const args = process.argv.slice(2);
@@ -266,13 +267,15 @@ function list() {
   function enrich(row, repo) {
     const candidates = sessions.filter(
       (s) =>
-        s.session_id === row.session_id && s.git_common_dir === repo.common,
+        s.session_id === row.session_id &&
+        s.git_common_dir === repo.common &&
+        (!row.tool || row.tool === s.tool),
     );
     const record = candidates.length === 1 ? candidates[0] : null;
     if (record) attached.add(`${record.tool}:${record.session_id}`);
     return {
       ...row,
-      tool: record?.tool || null,
+      tool: record?.tool || row.tool || null,
       presence: presence(record),
       last_seen: record?.last_seen || null,
       task: record?.task || row.task || "",
@@ -283,6 +286,37 @@ function list() {
     };
   }
   for (const repo of repos.values()) {
+    try {
+      const portable = readPortableClaims(repo.common);
+      for (const claim of portable.claims) {
+        if (claim.released_at && !options.all) continue;
+        const worktree = repo.worktrees.find(
+          (item) => item.path === claim.worktree,
+        );
+        rows.push(
+          enrich(
+            {
+              kind: "path-claim",
+              repository: repo.root,
+              worktree: claim.worktree,
+              worktree_id: null,
+              claim_id: claim.id,
+              branch: worktree?.branch || null,
+              head: worktree?.head || null,
+              path_prefix: claim.path_prefix,
+              lifecycle: claimStatus(claim, now),
+              session_id: claim.session_id,
+              tool: claim.tool,
+              task: claim.note,
+              registered: Boolean(worktree),
+            },
+            repo,
+          ),
+        );
+      }
+    } catch (error) {
+      warnings.push(`Portable claims unavailable: ${error.message}`);
+    }
     const claimsDir = path.join(repo.root, ".session-state/worktrees");
     const claims = [];
     if (fs.existsSync(claimsDir))

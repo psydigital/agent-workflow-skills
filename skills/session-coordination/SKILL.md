@@ -30,6 +30,13 @@ An unknown tool or route is missing evidence: never infer it from an ID's shape.
 The helper and ownership records are optional. Without them, use the host's
 available session inventory and the repository's own documented ownership rules.
 
+Preserve the repository's existing claims and enforcement. Use its documented
+claim commands when ownership changes are authorized. For repositories without
+ownership tooling, the optional [portable claims utility](references/portable-claims.md)
+can record path ownership after explicit setup. Do not initialize it merely to
+discover or contact a peer. Its expiry and release rules apply only to its own
+records. See [setup](references/setup.md) when installation is actually requested.
+
 If necessary inspect a bounded live session inventory; match the repository and
 task, not just a similar title. Do not search unrelated transcripts. Resolve an
 ambiguous target before sending.

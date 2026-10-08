@@ -5,6 +5,11 @@ optional compatibility inputs, not a locking protocol to install automatically.
 If a repository uses another format, inspect its own ownership tooling separately.
 Session presence, checkout location, and Git branches never establish ownership.
 
+For a repository without its own ownership tooling, use the separately stored,
+opt-in [portable claim format](portable-claims.md). Its writer never updates the
+compatibility files below. Their expiry, release and enforcement rules remain
+owned by the repository that produces them.
+
 ## Worktree records
 
 The helper looks under `.session-state/worktrees/` in the main checkout for

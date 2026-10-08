@@ -27,6 +27,14 @@ Repositories do not need ownership files to use discovery. Existing integrations
 can expose the [optional ownership record formats](ownership-records.md); the
 helper observes these records and does not create or enforce them.
 
+If explicitly initialized, [portable claims](portable-claims.md) are read from
+Git's shared directory and emitted as `kind: "path-claim"`. Their owner includes
+both tool and native session ID, so equal IDs in different tools do not collide.
+Unreleased portable claims remain visible when expired; released records appear
+only with `--all`. The legacy record formats retain their existing filtering.
+Unreadable portable state produces a warning while other discovery continues;
+do not treat that warning as proof that no ownership exists.
+
 ## Presence and addresses
 
 SessionStart, UserPromptSubmit, PostToolUse, Stop and SessionEnd hooks maintain

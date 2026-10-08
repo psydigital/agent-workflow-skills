@@ -18,11 +18,17 @@ Validate changed frontmatter and JSON, check relative links, and run the discove
 helper tests when changing its code or documented contracts:
 
 ```sh
-node --test skills/session-coordination/scripts/agent-sessions.test.mjs
+node --test skills/session-coordination/scripts/*.test.mjs
 ```
 
 The `evals/evals.json` files describe behavioral cases. Parsing them does not
 prove agent behavior; report separately which cases were actually exercised.
+
+Preserve existing discovery output and hook behavior when adding integrations.
+Test ownership changes in disposable repositories and agent settings in temporary
+homes. Do not initialize claims, install hooks, or change real ownership records
+as part of development verification. Existing repository claims and enforcement
+remain authoritative; portable claims must stay opt-in and separately stored.
 
 Review the exact diff before committing. Use a public-safe Git identity and keep
 real runtime records outside this repository. Do not import a private Git history.
